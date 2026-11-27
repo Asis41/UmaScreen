@@ -3,3 +3,6 @@ dist/
 # project map regenerated locally with graphify; contains machine paths
 graphify-out/
 *.tmp
+# local Claude Code notes and settings
+CLAUDE.md
+.claude/

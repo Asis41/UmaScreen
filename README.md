@@ -27,4 +27,4 @@ npm test       # pruebas
 npm run dist   # genera dist/UmaScreen.exe
 ```
 
-Detalles técnicos en [CLAUDE.md](CLAUDE.md). Datos de [Game8](https://game8.co) y [GameTora](https://gametora.com); este proyecto no está afiliado a ellos.
+Datos de [Game8](https://game8.co) y [GameTora](https://gametora.com); este proyecto no está afiliado a ellos.
