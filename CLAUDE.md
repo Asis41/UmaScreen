@@ -12,6 +12,7 @@ Overlay para PC (Windows) que se muestra encima de un juego con notas, texto e i
 - `npm start`: ejecutar en desarrollo.
 - `npm test`: self-check del extractor (`test/scrape.test.js`).
 - `npm run dist`: genera `dist/UmaScreen.exe` (portable, sin firma).
+- Repositorio público: https://github.com/Asis41/UmaScreen (rama `main`). `.exe` para usuarios como Release: subir `version` en `package.json`, `npm run dist`, y `gh release create vX.Y.Z dist/UmaScreen.exe`. `dist/`, `node_modules/` y `graphify-out/` no van al repositorio.
 - Mapa del proyecto (graphify) en `graphify-out/`: consultar `graphify-out/GRAPH_REPORT.md` o `graphify query "..."` antes de explorar a mano. Tras cambiar código: `graphify update .` (gratis); tras cambiar docs/imágenes: `/graphify . --update`. `.graphifyignore` excluye `node_modules/` y `dist/`.
 
 ## Archivos
