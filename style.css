@@ -1,0 +1,186 @@
+/* Personaliza el overlay aquí */
+:root {
+  --bg-rgb: 16 18 28;
+  --bg: rgb(var(--bg-rgb) / 0.78);
+  --text: #f2f3f7;
+  --muted: #a9adbd;
+  --accent: #ff7ab8;
+  --radius: 12px;
+  --font: "Segoe UI", system-ui, sans-serif;
+  --size: 14px;
+}
+
+html, body { margin: 0; background: transparent; color: var(--text); font: var(--size)/1.45 var(--font); }
+main {
+  position: fixed; top: 50px; right: 10px; box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-end;
+  gap: 10px; padding: 10px; max-height: calc(100vh - 60px); overflow-y: auto;
+}
+
+.card {
+  width: 400px; box-sizing: border-box; max-width: calc(100vw - 20px);
+  background: rgb(var(--bg-rgb) / var(--alpha, 0.78));
+  backdrop-filter: blur(8px);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  text-shadow: 0 1px 2px #000;
+}
+.card h2 { margin: 0 0 6px; font-size: 1.1em; display: flex; gap: 6px; }
+/* Moved cards: x/y saved per card; the rest stay in the right column */
+.card.placed { position: fixed; z-index: 2; overflow: auto; }
+/* Resizable from the bottom-right corner in edit mode (or if clickable); w/h saved per card */
+body.edit .card, .card.live, .card.sized { overflow: auto; }
+body.edit .card:not(.collapsed), .card.live:not(.collapsed) { resize: both; min-width: 220px; min-height: 60px; }
+.card.collapsed { height: auto !important; }
+/* Hidden cards: gone in every mode; turned back on from the "Tarjetas" menu */
+.card.off { display: none; }
+
+/* Collapsible cards: title is a button, collapsed shows only the title */
+.fold {
+  flex: 1; background: none; color: var(--accent); padding: 0; border-radius: 4px;
+  font-weight: 600; text-align: left; text-shadow: inherit;
+}
+.fold::before { content: "▾ "; display: inline-block; width: 1.1em; }
+.collapsed .fold::before { content: "▸ "; }
+.card.collapsed { padding-block: 6px; }
+.card.collapsed h2 { margin: 0; }
+.card.collapsed > :not(h2) { display: none; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 8px; }
+.tab { background: rgba(255, 255, 255, 0.08); color: var(--muted); padding: 3px 8px; font-size: 0.85em; }
+.tab[aria-selected="true"] { background: var(--accent); color: #111; }
+.edit-btn, .tool { display: none; background: none; color: var(--muted); padding: 0 4px; }
+body.edit .edit-btn, body.edit .tool, .card.live .edit-btn, .card.live .tool { display: inline-block; }
+.edit-btn:hover, .tool:hover { color: var(--text); }
+.grip { cursor: grab; touch-action: none; }
+.grip:active { cursor: grabbing; }
+.card p { margin: 0; white-space: pre-wrap; }
+.card img { max-width: 100%; border-radius: 8px; margin-bottom: 6px; }
+.error { color: #ff8a8a; }
+
+/* Skill search card (GameTora): the box only shows in edit mode, results always */
+.skill-search {
+  display: none; width: 100%; box-sizing: border-box; margin-bottom: 6px;
+  background: #11131c; color: var(--text); border: 1px solid #3a3f55; border-radius: 6px; padding: 6px; font: inherit;
+}
+body.edit .skill-search, .card.live .skill-search { display: block; }
+.skill-filters { display: none; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+body.edit .skill-filters, .card.live .skill-filters { display: grid; }
+.skill-filters select {
+  background: #11131c; color: var(--text); border: 1px solid #3a3f55; border-radius: 6px; padding: 4px; font: inherit;
+}
+.skill-filters select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.active-filters { display: block; margin-bottom: 6px; color: var(--accent); }
+.skills { font-size: 0.9em; color: var(--muted); }
+.skills p { margin: 0 0 6px; white-space: normal; color: var(--text); }
+.skills strong { color: var(--accent); }
+.star-btn { margin-left: 4px; color: #ffd479; }
+.star-btn[aria-pressed="true"] { color: #ffd479; }
+/* user notes (Markdown subset) */
+.notes p { margin: 0 0 6px; white-space: normal; }
+.notes h3, .notes h4, .notes h5 { margin: 6px 0 4px; color: var(--accent); }
+.notes ul, .notes ol { margin: 0 0 6px; padding-left: 20px; }
+.notes code { background: rgba(255, 255, 255, 0.1); border-radius: 4px; padding: 0 4px; color: #ffd479; }
+.more-btn { margin-left: 6px; font-size: 0.85em; text-decoration: underline; }
+.skill-detail {
+  margin: -2px 0 8px; padding: 6px 8px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; color: var(--text);
+  font-size: 0.9em; max-height: 320px; overflow-y: auto;
+}
+.skill-detail h4 { margin: 6px 0 2px; color: var(--accent); font-size: 1em; }
+.skill-detail h4:first-of-type { margin-top: 4px; }
+.skill-detail ul { margin: 0; padding-left: 16px; }
+.skill-detail code { color: #ffd479; font-size: 0.95em; word-break: break-all; }
+.skill-detail .or { list-style: none; margin-left: -16px; color: var(--muted); }
+.skill-detail .jp { color: var(--muted); }
+.cond-viewer { font-size: 0.9em; }
+.cond-viewer > p { margin: 0 0 6px; white-space: normal; color: var(--muted); }
+.cond-viewer h4 { margin: 4px 0; color: var(--accent); }
+.cond-viewer .trigger { color: var(--text); }
+.cond-viewer ul { margin: 0 0 6px; padding-left: 16px; }
+.cond-viewer .skill-detail { margin: 0 0 6px; max-height: none; }
+.cond-viewer .skill-detail > code:first-child { font-weight: 600; }
+.muted { color: var(--muted); }
+.how-to { margin-bottom: 6px; font-size: 0.9em; }
+.how-to summary { color: var(--accent); cursor: pointer; }
+.how-to p { margin: 4px 0; white-space: normal; }
+.skills .skill-icon { width: 22px; height: 22px; margin: 0 6px 0 0; border-radius: 0; vertical-align: middle; }
+
+/* Content downloaded from webs (tables, icons) */
+.web { font-size: 0.9em; overflow-x: auto; }
+.web p { margin: 6px 0; white-space: normal; }
+.web table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+.web th, .web td { border: 1px solid rgba(255, 255, 255, 0.15); padding: 4px 6px; vertical-align: top; text-align: left; }
+.web th { background: rgba(255, 122, 184, 0.18); color: var(--accent); }
+.web img { margin: 0 4px 0 0; border-radius: 4px; vertical-align: middle; max-width: 100%; height: auto; }
+.web img[width="728"] { width: 100%; }
+
+/* Edit mode: show it's interactive */
+body.edit { outline: 2px dashed var(--accent); outline-offset: -4px; min-height: 100vh; }
+body.edit .fold:hover { filter: brightness(1.25); }
+
+/* Edit-mode menu to turn cards on/off: opaque so it reads clearly over the game */
+#panel {
+  position: fixed; top: 10px; left: 20px; z-index: 3; width: 280px; max-height: calc(100vh - 40px);
+  display: flex; flex-direction: column; box-sizing: border-box; padding: 12px 14px;
+  background: #1b1e2b; border: 1px solid #3a3f55; border-radius: var(--radius); box-shadow: 0 4px 16px #0008;
+}
+#panel[hidden] { display: none; }
+#panel h2 { margin: 0; font-size: 1.1em; color: var(--accent); }
+#panel small { color: var(--muted); margin-bottom: 8px; }
+#toggles { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+#toggles li { display: flex; align-items: center; }
+#toggles li > label:first-child { flex: 1; }
+#toggles .live-toggle { gap: 2px; padding: 4px; }
+#toggles label { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+#toggles label:hover { background: #2a2e40; }
+#toggles input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+#toggles li > label:first-child:has(input:not(:checked)) { color: var(--muted); }
+#toggles .warn { color: #ffb86b; }
+/* clickable outside edit mode: thin accent ring so you know it blocks the game there */
+body:not(.edit) .card.live { box-shadow: 0 0 0 1px var(--accent); }
+
+#toolbar {
+  position: fixed; top: 0; right: 20px; z-index: 3;
+  display: flex; gap: 6px; align-items: center; padding: 8px 10px;
+  background: var(--bg); border-radius: var(--radius); margin: 10px 10px 0;
+}
+#toolbar[hidden] { display: none; }
+#toolbar span { margin-right: auto; color: var(--muted); }
+
+button {
+  background: var(--accent); color: #111; border: 0; border-radius: 6px;
+  padding: 5px 10px; font: inherit; cursor: pointer;
+}
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+dialog { background: #1b1e2b; color: var(--text); border: 1px solid #333; border-radius: var(--radius); width: 90%; max-width: 480px; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+dialog label { display: block; margin-bottom: 8px; color: var(--muted); }
+dialog input, dialog textarea {
+  display: block; width: 100%; box-sizing: border-box; margin-top: 3px;
+  background: #11131c; color: var(--text); border: 1px solid #3a3f55; border-radius: 6px; padding: 6px; font: inherit;
+}
+dialog fieldset { border: 1px solid #3a3f55; border-radius: 8px; }
+dialog menu { display: flex; gap: 6px; justify-content: flex-end; padding: 0; }
+#del { background: #ff8a8a; margin-right: auto; }
+dialog .check { display: flex; gap: 8px; align-items: center; color: var(--text); }
+dialog .check input { width: auto; margin: 0; accent-color: var(--accent); }
+#settings h2 { margin: 0 0 10px; color: var(--accent); font-size: 1.2em; }
+#settings select { width: 100%; background: #11131c; color: var(--text); border: 1px solid #3a3f55; border-radius: 6px; padding: 6px; font: inherit; margin-top: 3px; }
+#settings .hint { display: block; margin: -4px 0 8px; color: var(--muted); }
+#settings .hint[hidden] { display: none; }
+#set-keys label { display: flex; align-items: center; gap: 6px; }
+#set-keys input { flex: 1; cursor: pointer; }
+#set-keys .tool { display: inline-block; }
+#set-msg { color: #ffb86b; min-height: 1.2em; margin: 6px 0; }
+#profiles h2 { margin: 0 0 6px; color: var(--accent); font-size: 1.2em; }
+#profile-news { margin: 0 0 10px; padding: 8px 10px; background: rgba(255, 122, 184, 0.15); border-left: 3px solid var(--accent); border-radius: 6px; }
+#profile-news[hidden] { display: none; }
+#profiles .hint { margin: 0 0 10px; color: var(--muted); }
+#profile-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#profile-list li { display: flex; gap: 6px; align-items: center; }
+.profile { flex: 1; text-align: left; background: #2a2e40; color: var(--text); padding: 8px 10px; }
+.profile:hover { background: #353a50; }
+.profile.current { outline: 2px solid var(--accent); }
+.profile small { color: var(--muted); }
+#profiles .del-profile { display: inline-block; }
+#profiles select { width: 100%; background: #11131c; color: var(--text); border: 1px solid #3a3f55; border-radius: 6px; padding: 6px; font: inherit; }

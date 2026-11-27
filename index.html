@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: file:; style-src 'self'">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="toolbar" hidden>
+    <span id="mode-label">Modo edición</span>
+    <button id="profiles-btn">Configuraciones</button>
+    <button id="settings-btn">Ajustes</button>
+    <button id="add">+ Tarjeta</button>
+    <button id="refresh">Actualizar webs</button>
+    <button id="restack">Recolocar todas</button>
+    <button id="folder">Carpeta de datos</button>
+  </header>
+  <aside id="panel" hidden>
+    <h2>Tarjetas</h2>
+    <small id="panel-count"></small>
+    <small>Casilla = activa · 🖱 = clicable fuera del modo edición</small>
+    <ul id="toggles"></ul>
+  </aside>
+  <main id="cards"></main>
+  <datalist id="skill-names"></datalist>
+  <datalist id="group-names"></datalist>
+
+  <dialog id="profiles">
+    <h2>Elige una configuración</h2>
+    <p class="hint">Cada configuración guarda sus propias tarjetas, posiciones y tamaños (por ejemplo, una por CM). Los cambios se guardan solos en la que elijas.</p>
+    <p id="profile-news" hidden></p>
+    <ul id="profile-list"></ul>
+    <fieldset>
+      <legend>Nueva configuración</legend>
+      <label>Nombre <input id="profile-name" placeholder="CM24 Aries Cup" maxlength="60"></label>
+      <label>Basada en <select id="profile-base"></select></label>
+      <menu><button type="button" id="profile-create">Crear y usar</button></menu>
+    </fieldset>
+    <label class="check"><input type="checkbox" id="profile-remember"> Recordar mi elección y no preguntar al arrancar</label>
+  </dialog>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Ajustes</h2>
+      <label class="check"><input type="checkbox" id="set-autostart"> Arrancar con Windows</label>
+      <small id="set-autostart-note" class="hint">Solo disponible en el .exe (no al ejecutar con npm start).</small>
+      <label>Pantalla del overlay <select id="set-display"></select></label>
+      <label>Configuración al arrancar <select id="set-remember"></select></label>
+      <fieldset>
+        <legend>Atajos de teclado (haz clic en uno y pulsa la combinación)</legend>
+        <div id="set-keys"></div>
+      </fieldset>
+      <p id="set-msg" role="status"></p>
+      <menu><button value="close">Cerrar</button></menu>
+    </form>
+  </dialog>
+
+  <dialog id="editor">
+    <form method="dialog">
+      <label>Título <input name="title" required></label>
+      <label>Grupo de pestañas (opcional: tarjetas con el mismo grupo se juntan en una) <input name="group" list="group-names"></label>
+      <label>Texto <small>(admite **negrita**, *cursiva*, `código`, - listas, 1. listas numeradas y # títulos)</small> <textarea name="body" rows="8"></textarea></label>
+      <label>Imagen (URL o ruta) <input name="image"></label>
+      <fieldset>
+        <legend>Descargar desde web (opcional)</legend>
+        <label>URL <input name="url" type="url"></label>
+        <label>Sección (texto del título en la página) <input name="section" placeholder="Stat Guidelines"></label>
+        <label>Selector CSS (opcional si pones sección) <input name="selector" placeholder=".contenido p"></label>
+      </fieldset>
+      <menu>
+        <button value="delete" id="del">Eliminar</button>
+        <button value="cancel" formnovalidate>Cancelar</button>
+        <button value="ok">Guardar</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="notes.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

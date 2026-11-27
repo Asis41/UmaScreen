@@ -1,0 +1,24 @@
+[
+  {
+    "title": "Bienvenido a UmaScreen",
+    "body": "Ctrl+Shift+E  Modo edición (añadir, editar o borrar tarjetas)\nCtrl+Shift+O  Mostrar / ocultar\nCtrl+Shift+R  Actualizar webs\n\nTambién puedes usar el icono rosa junto al reloj de Windows.\nEl juego debe estar en modo Ventana o Ventana sin bordes.",
+    "image": "",
+    "url": "",
+    "selector": ""
+  },
+  {
+    "title": "Habilidades (GameTora)",
+    "body": "",
+    "image": "",
+    "skills": true,
+    "query": ""
+  },
+  {
+    "title": "Visor de condiciones",
+    "body": "",
+    "image": "",
+    "condViewer": true,
+    "query": "",
+    "skill": ""
+  }
+]

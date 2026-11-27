@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "in=$(cat); echo \"$in\" | grep -qE \"\\\"file_path\\\": ?\\\"[^\\\"]*\\.(js|json|html|css)\\\"\" && ! echo \"$in\" | grep -q graphify-out && cd \"$CLAUDE_PROJECT_DIR\" && graphify update . >/dev/null 2>&1; true",
+            "async": true,
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

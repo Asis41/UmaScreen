@@ -1,0 +1,38 @@
+{
+  "name": "umascreen",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/scrape.test.js",
+    "dist": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.umascreen.overlay",
+    "productName": "UmaScreen",
+    "files": [
+      "*.js",
+      "index.html",
+      "style.css",
+      "defaults.json",
+      "defaults-cm.json",
+      "es.json",
+      "icon.png",
+      "!test"
+    ],
+    "win": {
+      "icon": "icon.png"
+    },
+    "portable": {
+      "artifactName": "UmaScreen.exe"
+    }
+  },
+  "dependencies": {
+    "cheerio": "^1.1.0"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.18.0"
+  }
+}
