@@ -29,8 +29,10 @@ const sk = skillList([
   { enname: 'JP only', endesc: 'Speed up', unreleased: ['en'], sup_hint: [[30004]] },
   { name_en: 'Groundwork', desc_en: 'Accel' },
   { desc_en: 'no name' },
+  { name_en: 'Bad icon', desc_en: 'x', iconid: '../../evil' },
 ], refs);
-assert.strictEqual(sk.length, 2);
+assert.strictEqual(sk.length, 3);
+assert.strictEqual(sk[2].icon, undefined); // non-numeric icon ids never reach the file system
 assert.deepStrictEqual(sk[0].tags, ['run', 'acc', 'r2', 'glb']);
 assert.strictEqual(sk[0].icon, 20041);
 assert.strictEqual(sk[0].cost, 100);
@@ -48,7 +50,8 @@ const hub = `
   <a href="/games/x/archives/638136">Pisces Cup 2 (CM23)</a>
   <a href="https://game8.co/games/x/archives/634580">Champions Meeting Look Ahead: What to Expect in CM23-CM24</a>
   <a href="/games/x/archives/Champions-Meeting-Look-Ahead-CM25-26">Aries Cup (CM25) Look Ahead</a>
-  <a href="/games/x/archives/584408">Pisces Cup (CM11)</a>`;
+  <a href="/games/x/archives/584408">Pisces Cup (CM11)</a>
+  <a href="https://evil.example/archives/999">Evil Cup (CM99)</a>`;
 assert.deepStrictEqual(latestCM(hub, 'https://game8.co/games/x/archives/541155'),
   { n: 23, name: 'Pisces Cup 2', url: 'https://game8.co/games/x/archives/638136' });
 assert.strictEqual(latestCM('<a href="/a/1">nada</a>', 'https://game8.co/'), null);

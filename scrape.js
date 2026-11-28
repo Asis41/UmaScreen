@@ -67,7 +67,9 @@ function latestCM(html, baseURI) {
     const href = $(a).attr('href');
     if (!m || /look ahead/i.test(text) || !/\/archives\/\d+$/.test(href)) return;
     const n = Number(m[2]);
-    if (!best || n > best.n) best = { n, name: m[1], url: new URL(href, baseURI).href };
+    const url = new URL(href, baseURI);
+    if (url.hostname !== 'game8.co') return; // cards will scrape this URL: never let the hub point elsewhere
+    if (!best || n > best.n) best = { n, name: m[1], url: url.href };
   });
   return best;
 }
@@ -107,7 +109,7 @@ function skillList(data, refs = {}) {
   const seen = new Set();
   return data
     .map((s) => ({
-      name: s.name_en || s.enname, desc: s.desc_en || s.endesc || '', tags: skillTags(s), icon: s.iconid,
+      name: s.name_en || s.enname, desc: s.desc_en || s.endesc || '', tags: skillTags(s), icon: Number.isInteger(s.iconid) ? s.iconid : undefined,
       cost: s.cost,
       groups: (s.condition_groups || []).map((g) => ({
         dur: g.base_time / 10000, cond: g.condition || '', pre: g.precondition || '',

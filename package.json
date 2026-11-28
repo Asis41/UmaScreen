@@ -1,6 +1,6 @@
 {
   "name": "umascreen",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -32,7 +32,7 @@
     "cheerio": "^1.1.0"
   },
   "devDependencies": {
-    "electron": "^42.11.16",
+    "electron": "^45.5.0",
     "electron-builder": "^26.18.0"
   }
 }

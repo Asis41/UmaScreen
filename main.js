@@ -185,7 +185,8 @@ async function refreshAll() {
 async function downloadIcons(list) {
   fs.mkdirSync(ICONS, { recursive: true });
   const file = (id) => path.join(ICONS, id + '.png');
-  const missing = [...new Set(list.map((s) => s.icon))].filter((id) => id && !fs.existsSync(file(id)));
+  // ids come from GameTora and become file names: digits only
+  const missing = [...new Set(list.map((s) => s.icon))].filter((id) => /^\d+$/.test(id) && !fs.existsSync(file(id)));
   const worker = async () => {
     for (let id; (id = missing.pop());) {
       try {
@@ -211,7 +212,7 @@ const prepareSkills = (data) => {
     ...data,
     skills: data.skills.map((s) => ({
       ...s,
-      icon: s.icon && pathToFileURL(path.join(ICONS, s.icon + '.png')).href,
+      icon: /^\d+$/.test(s.icon) ? pathToFileURL(path.join(ICONS, s.icon + '.png')).href : '',
       desc_es: es.descs?.[s.desc] || '',
     })),
     conditions: Object.fromEntries(Object.entries(data.conditions || {}).map(([n, c]) => [n, { ...c, es: es.conditions?.[n] || {} }])),
@@ -356,10 +357,13 @@ app.whenReady().then(() => {
     x, y, width, height,
     transparent: true, frame: false, resizable: false,
     skipTaskbar: true, hasShadow: false, icon: ICON,
-    webPreferences: { preload: path.join(__dirname, 'preload.js') },
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, nodeIntegration: false },
   });
   firstProfiles();
   win.setAlwaysOnTop(true, 'screen-saver');
+  // the overlay only ever shows index.html: a dropped file/link must not navigate it, and no popups
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.loadFile('index.html');
   win.webContents.on('did-finish-load', () => { setEditMode(false); startup(); });
 
