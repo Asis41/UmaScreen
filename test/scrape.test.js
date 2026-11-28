@@ -1,5 +1,12 @@
 const assert = require('assert');
-const { extract, extractSection, skillList, conditionInfo, latestCM } = require('../scrape');
+const { extract, extractSection, skillList, conditionInfo, latestCM, isNewer } = require('../scrape');
+
+assert.strictEqual(isNewer('v1.0.2', '1.0.1'), true);
+assert.strictEqual(isNewer('v1.0.1', '1.0.1'), false);
+assert.strictEqual(isNewer('v1.0.10', '1.0.9'), true);
+assert.strictEqual(isNewer('1.2', '1.10'), false);
+assert.strictEqual(isNewer('v2', '1.9.9'), true);
+assert.strictEqual(isNewer('beta', '1.0.0'), false);
 
 const html = `<div class="info"><p>Hola</p><img src="/a.png"></div><div class="info"><p>Mundo</p></div>`;
 const r = extract(html, '.info', 'https://example.com/page');

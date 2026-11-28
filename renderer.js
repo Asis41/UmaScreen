@@ -50,23 +50,23 @@ function render() {
     };
     // textContent only: scraped text is never parsed as HTML
     const h = document.createElement('h2');
-    const grip = tool('⠿', 'Mover', null, 'grip tool');
+    const grip = tool('⠿', t('Mover'), null, 'grip tool');
     grip.onpointerdown = (e) => drag(e, el, c);
     const fold = make('button', title, 'fold');
     fold.setAttribute('aria-expanded', String(!c.collapsed));
     fold.onclick = () => { c.collapsed = !c.collapsed; save(); };
     const z = ZOOMS.indexOf(c.zoom || 1);
     h.append(grip, fold,
-      tool('A−', 'Reducir texto', () => { c.zoom = ZOOMS[Math.max(0, z - 1)]; save(); }),
-      tool('A+', 'Ampliar texto', () => { c.zoom = ZOOMS[Math.min(ZOOMS.length - 1, z + 1)]; save(); }),
-      tool('◐', `Transparencia del fondo (${Math.round((1 - (c.alpha ?? ALPHAS[0])) * 100)} %)`, () => {
+      tool('A−', t('Reducir texto'), () => { c.zoom = ZOOMS[Math.max(0, z - 1)]; save(); }),
+      tool('A+', t('Ampliar texto'), () => { c.zoom = ZOOMS[Math.min(ZOOMS.length - 1, z + 1)]; save(); }),
+      tool('◐', t('Transparencia del fondo ({p} %)', { p: Math.round((1 - (c.alpha ?? ALPHAS[0])) * 100) }), () => {
         c.alpha = ALPHAS[(ALPHAS.indexOf(c.alpha ?? ALPHAS[0]) + 1) % ALPHAS.length];
         save();
       }));
     if (c.w || c.h || (c.zoom && c.zoom !== 1)) {
-      h.append(tool('↺', 'Tamaño original', () => { delete c.w; delete c.h; delete c.zoom; save(); }));
+      h.append(tool('↺', t('Tamaño original'), () => { delete c.w; delete c.h; delete c.zoom; save(); }));
     }
-    h.append(tool('✎', 'Editar', () => open(cards.indexOf(a)), 'edit-btn'));
+    h.append(tool('✎', t('Editar'), () => open(cards.indexOf(a)), 'edit-btn'));
     el.append(h);
     if (members.length > 1) {
       const tabs = make('div', null, 'tabs');
@@ -105,8 +105,8 @@ function cardContent(c, box) {
       const q = document.createElement('input');
       q.type = 'search';
       q.className = 'skill-search';
-      q.placeholder = 'Buscar habilidad (nombre o descripción)';
-      q.setAttribute('aria-label', 'Buscar habilidad');
+      q.placeholder = t('Buscar habilidad (nombre o descripción)');
+      q.setAttribute('aria-label', t('Buscar habilidad'));
       q.value = c.query || '';
       // update only the results so the input keeps focus while typing
       const update = () => { const n = skillResults(c, update); res.replaceWith(n); res = n; };
@@ -117,8 +117,8 @@ function cardContent(c, box) {
       sel.className = 'skill-filters';
       for (const [key, label, opts] of SKILL_FILTERS) {
         const s = document.createElement('select');
-        s.setAttribute('aria-label', label);
-        s.append(new Option(`${label}: todos`, ''), ...opts.map(([v, t]) => new Option(t, v)));
+        s.setAttribute('aria-label', t(label));
+        s.append(new Option(t('{label}: todos', { label: t(label) }), ''), ...opts.map(([v, x]) => new Option(t(x), v)));
         s.value = c.filters?.[key] || '';
         s.onchange = () => { c.filters = { ...c.filters, [key]: s.value }; window.api.save(cards); update(); };
         sel.append(s);
@@ -138,9 +138,9 @@ function cardContent(c, box) {
         i.onchange = () => window.api.save(cards);
         return i;
       };
-      const sk = field('skill', 'Filtrar por habilidad (elige de la lista)');
+      const sk = field('skill', t('Filtrar por habilidad (elige de la lista)'));
       sk.setAttribute('list', 'skill-names');
-      box.append(field('query', 'Buscar condición (nombre o descripción)'), sk, howToRead(), res);
+      box.append(field('query', t('Buscar condición (nombre o descripción)')), sk, howToRead(), res);
     }
     if (c.html) {
       // already whitelist-sanitized in scrape.js; CSP also blocks any script
@@ -164,9 +164,9 @@ function renderGroups() {
 }
 
 const MAX_SKILLS = 15;
-// Spanish when es.json has it, English otherwise. Skill names always stay in English.
-const skillDesc = (s) => s.desc_es || s.desc;
-const condText = (k, f) => k.es?.[f] || k[f];
+// Spanish (when chosen and es.json has it), English otherwise. Skill names always stay in English.
+const skillDesc = (s) => (LANG === 'es' && s.desc_es) || s.desc;
+const condText = (k, f) => (LANG === 'es' && k.es?.[f]) || k[f];
 // search: case and accent insensitive, so "aceleracion" finds "aceleración"
 const plain = (t) => String(t || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 const searchWords = (q) => plain(q).split(/\s+/).filter(Boolean);
@@ -219,7 +219,7 @@ const conditionName = (clause) => clause.split(/[<>=!]/)[0];
 function conditionList(cond) {
   const ul = make('ul');
   branches(cond).forEach((branch, i) => {
-    if (i) ul.append(make('li', 'o bien:', 'or'));
+    if (i) ul.append(make('li', t('o bien:'), 'or'));
     for (const clause of branch) {
       const li = make('li');
       li.append(make('code', clause));
@@ -234,15 +234,15 @@ function conditionList(cond) {
 
 function howToRead() {
   const d = make('details', null, 'how-to');
-  d.append(make('summary', 'Cómo leer las condiciones'));
-  for (const t of [
+  d.append(make('summary', t('Cómo leer las condiciones')));
+  for (const x of [
     'Cada condición es nombre + operador + valor. Ej.: accumulatetime>=5 = "han pasado 5 segundos o más desde la salida".',
     'Operadores: == igual, != distinto, >= mayor o igual, <= menor o igual, > mayor, < menor.',
     '& une condiciones que deben cumplirse todas. @ separa alternativas: basta con que se cumpla un bloque completo.',
     'Ej.: distance_type==1&ground_type==1@distance_type==2&ground_type==1 → Sprint en césped, o Milla en césped.',
     'La precondición debe cumplirse antes; luego se comprueba la condición. Casi todas las habilidades además necesitan pasar una tirada de Inteligencia.',
     'Si hay varios Triggers se comprueban de arriba abajo: si salta el 1, el 2 ya no (salvo con is_activate_other_skill_detail, donde el 2 es continuación del 1).',
-  ]) d.append(make('p', t));
+  ]) d.append(make('p', t(x)));
   return d;
 }
 
@@ -250,23 +250,23 @@ const MAX_CONDITIONS = 15;
 function conditionResults(c) {
   const box = make('div', null, 'cond-viewer');
   const names = Object.keys(conditions).sort();
-  if (!names.length) { box.textContent = 'Cargando condiciones de GameTora…'; return box; }
+  if (!names.length) { box.textContent = t('Cargando condiciones de GameTora…'); return box; }
   const want = (c.skill || '').trim().toLowerCase();
   const skill = want && skills.find((s) => s.name.toLowerCase() === want);
   const words = searchWords(c.query);
-  if (want && !skill) box.append(make('p', 'Habilidad no encontrada: elige una de la lista.'));
+  if (want && !skill) box.append(make('p', t('Habilidad no encontrada: elige una de la lista.')));
   if (!skill && !words.length) {
-    if (!want) box.append(make('p', 'Busca una condición o elige una habilidad en modo edición.'));
+    if (!want) box.append(make('p', t('Busca una condición o elige una habilidad en modo edición.')));
     return box;
   }
   let shown = names;
   if (skill) {
-    box.append(make('h4', `Condiciones de: ${skill.name}`));
+    box.append(make('h4', t('Condiciones de: {name}', { name: skill.name })));
     const used = new Set();
     skill.groups.forEach((g, i) => {
-      if (skill.groups.length > 1) box.append(make('h4', `Trigger ${i + 1}`, 'trigger'));
-      if (g.pre) box.append(make('div', 'Precondición:'), conditionList(g.pre));
-      if (g.cond) box.append(make('div', 'Condición:'), conditionList(g.cond));
+      if (skill.groups.length > 1) box.append(make('h4', t('Trigger {n}', { n: i + 1 }), 'trigger'));
+      if (g.pre) box.append(make('div', t('Precondición:')), conditionList(g.pre));
+      if (g.cond) box.append(make('div', t('Condición:')), conditionList(g.cond));
       for (const b of branches(g.pre + '@' + g.cond)) for (const cl of b) if (cl) used.add(conditionName(cl));
     });
     shown = names.filter((n) => used.has(n));
@@ -275,22 +275,22 @@ function conditionResults(c) {
     const t = plain(`${n} ${conditions[n].desc} ${conditions[n].es?.desc || ''}`);
     return words.every((w) => t.includes(w));
   });
-  if (!hits.length) box.append(make('p', 'Sin resultados.'));
+  if (!hits.length) box.append(make('p', t('Sin resultados.')));
   for (const n of hits.slice(0, MAX_CONDITIONS)) {
     const k = conditions[n];
     const item = make('div', null, 'skill-detail');
     item.append(make('code', n), make('div', condText(k, 'desc')));
     if (k.example) {
       const ex = make('div');
-      ex.append('Ejemplo: ', make('code', k.example), k.meaning ? ` — ${condText(k, 'meaning')}` : '');
+      ex.append(t('Ejemplo: '), make('code', k.example), k.meaning ? ` — ${condText(k, 'meaning')}` : '');
       item.append(ex);
     }
-    if (k.values) item.append(make('div', `Valores: ${condText(k, 'values')}`));
-    if (k.ops) item.append(make('div', `Usado en habilidades: ${k.ops}`, 'muted'));
-    if (k.note) item.append(make('div', `Nota: ${condText(k, 'note')}`, 'muted'));
+    if (k.values) item.append(make('div', t('Valores: {v}', { v: condText(k, 'values') })));
+    if (k.ops) item.append(make('div', t('Usado en habilidades: {v}', { v: k.ops }), 'muted'));
+    if (k.note) item.append(make('div', t('Nota: {v}', { v: condText(k, 'note') }), 'muted'));
     box.append(item);
   }
-  if (hits.length > MAX_CONDITIONS) box.append(make('small', `y ${hits.length - MAX_CONDITIONS} más… afina la búsqueda`));
+  if (hits.length > MAX_CONDITIONS) box.append(make('small', t('y {n} más… afina la búsqueda', { n: hits.length - MAX_CONDITIONS })));
   return box;
 }
 
@@ -298,26 +298,26 @@ function skillDetail(s) {
   const d = make('div', null, 'skill-detail');
   const viewer = cards.find((x) => x.condViewer);
   if (viewer) {
-    const b = make('button', 'Ver en visor de condiciones', 'tool more-btn');
+    const b = make('button', t('Ver en visor de condiciones'), 'tool more-btn');
     b.onclick = () => { viewer.skill = s.name; viewer.hidden = false; window.api.save(cards); render(); };
     d.append(b);
   }
-  if (s.cost) d.append(make('div', `Coste: ${s.cost} SP`));
+  if (s.cost) d.append(make('div', t('Coste: {n} SP', { n: s.cost })));
   for (const g of s.groups || []) {
-    const fx = g.effects.map(([t, v]) => {
-      const [label, fmt] = EFFECTS[t] || [`Efecto ${t}`, (x) => String(x / 10000)];
-      return `${label} ${fmt(v)}`;
+    const fx = g.effects.map(([type, v]) => {
+      const [label, fmt] = EFFECTS[type] || [t('Efecto {n}', { n: type }), (x) => String(x / 10000)];
+      return `${t(label)} ${fmt(v)}`;
     });
-    d.append(make('h4', 'Efecto'), make('div', fx.join(' · ') + (g.dur > 0 ? ` · ${g.dur} s (base)` : '')));
-    if (g.pre) d.append(make('h4', 'Antes (precondición)'), conditionList(g.pre));
-    if (g.cond) d.append(make('h4', 'Condición'), conditionList(g.cond));
+    d.append(make('h4', t('Efecto')), make('div', fx.join(' · ') + (g.dur > 0 ? t(' · {n} s (base)', { n: g.dur }) : '')));
+    if (g.pre) d.append(make('h4', t('Antes (precondición)')), conditionList(g.pre));
+    if (g.cond) d.append(make('h4', t('Condición')), conditionList(g.cond));
   }
   for (const [key, label] of Object.entries(SOURCE_LABELS)) {
     const list = s.src?.[key];
     if (!list?.length) continue;
     const ul = make('ul');
     for (const n of list) ul.append(make('li', n, n.endsWith(' · JP') ? 'jp' : null));
-    d.append(make('h4', `${label} (${list.length})`), ul);
+    d.append(make('h4', `${t(label)} (${list.length})`), ul);
   }
   return d;
 }
@@ -326,9 +326,9 @@ function skillResults(c, update) {
   const box = document.createElement('div');
   box.className = 'skills';
   const words = searchWords(c.query);
-  const active = SKILL_FILTERS.flatMap(([key, , opts]) => opts.filter(([v]) => v === c.filters?.[key]).map(([, t]) => t));
-  if (!skills.length) box.textContent = 'Cargando habilidades de GameTora…';
-  else if (!words.length && !active.length) box.textContent = 'Escribe o elige un filtro en modo edición.';
+  const active = SKILL_FILTERS.flatMap(([key, , opts]) => opts.filter(([v]) => v === c.filters?.[key]).map(([, x]) => t(x)));
+  if (!skills.length) box.textContent = t('Cargando habilidades de GameTora…');
+  else if (!words.length && !active.length) box.textContent = t('Escribe o elige un filtro en modo edición.');
   else {
     if (active.length) {
       const line = document.createElement('small');
@@ -340,11 +340,11 @@ function skillResults(c, update) {
       const t = plain(`${s.name} ${s.desc} ${s.desc_es}`);
       return words.every((w) => t.includes(w)) && passesFilters(s, c.filters);
     });
-    if (!hits.length) box.append('Sin resultados.');
+    if (!hits.length) box.append(t('Sin resultados.'));
     for (const s of hits.slice(0, MAX_SKILLS)) box.append(...skillItem(s, c, update));
     if (hits.length > MAX_SKILLS) {
       const more = document.createElement('small');
-      more.textContent = `y ${hits.length - MAX_SKILLS} más… afina la búsqueda`;
+      more.textContent = t('y {n} más… afina la búsqueda', { n: hits.length - MAX_SKILLS });
       box.append(more);
     }
   }
@@ -365,11 +365,11 @@ function skillItem(s, c, update) {
   const fav = favoritesCard()?.favs?.includes(s.name);
   const star = make('button', fav ? '★' : '☆', 'tool star-btn');
   star.setAttribute('aria-pressed', String(!!fav));
-  star.setAttribute('aria-label', `${fav ? 'Quitar de' : 'Añadir a'} favoritas: ${s.name}`);
-  star.title = fav ? 'Quitar de favoritas' : 'Añadir a favoritas';
+  star.title = fav ? t('Quitar de favoritas') : t('Añadir a favoritas');
+  star.setAttribute('aria-label', `${star.title}: ${s.name}`);
   star.onclick = () => toggleFavorite(s.name);
   const open = c.detail === s.name;
-  const more = make('button', open ? 'Menos' : 'Más', 'tool more-btn');
+  const more = make('button', open ? t('Menos') : t('Más'), 'tool more-btn');
   more.setAttribute('aria-expanded', String(open));
   more.onclick = () => { c.detail = open ? '' : s.name; window.api.save(cards); update(); };
   p.append(make('strong', s.name), star, more, document.createElement('br'), skillDesc(s));
@@ -380,7 +380,7 @@ function skillItem(s, c, update) {
 const favoritesCard = () => cards.find((x) => x.favorites);
 function toggleFavorite(name) {
   let f = favoritesCard();
-  if (!f) cards.push((f = { title: 'Habilidades favoritas', body: '', image: '', favorites: true, favs: [] }));
+  if (!f) cards.push((f = { title: t('Habilidades favoritas'), body: '', image: '', favorites: true, favs: [] }));
   f.favs = f.favs || [];
   f.favs = f.favs.includes(name) ? f.favs.filter((n) => n !== name) : [...f.favs, name];
   window.api.save(cards);
@@ -389,9 +389,9 @@ function toggleFavorite(name) {
 
 function favoriteResults(c, update) {
   const box = make('div', null, 'skills');
-  if (!skills.length) { box.textContent = 'Cargando habilidades de GameTora…'; return box; }
+  if (!skills.length) { box.textContent = t('Cargando habilidades de GameTora…'); return box; }
   const list = (c.favs || []).map((n) => skills.find((s) => s.name === n)).filter(Boolean);
-  if (!list.length) box.textContent = 'Pulsa ☆ junto a una habilidad (en la tarjeta de habilidades) para añadirla aquí.';
+  if (!list.length) box.textContent = t('Pulsa ☆ junto a una habilidad (en la tarjeta de habilidades) para añadirla aquí.');
   for (const s of list) box.append(...skillItem(s, c, update));
   return box;
 }
@@ -419,7 +419,7 @@ function renderNotes(text) {
 function renderPanel() {
   const failing = cards.filter((c) => c.error).length;
   document.getElementById('panel-count').textContent =
-    `${cards.filter((c) => !c.hidden).length} de ${cards.length} activas` + (failing ? ` · ⚠ ${failing} con error` : '');
+    t('{a} de {b} activas', { a: cards.filter((c) => !c.hidden).length, b: cards.length }) + (failing ? t(' · ⚠ {n} con error', { n: failing }) : '');
   document.getElementById('toggles').replaceChildren(...cards.map((c) => {
     const li = document.createElement('li');
     const label = document.createElement('label');
@@ -430,17 +430,17 @@ function renderPanel() {
     label.append(box, ' ', c.title);
     if (c.error) {
       const warn = make('span', ' ⚠', 'warn');
-      warn.title = c.error + (c.autoHidden ? ' (se desactivó sola)' : '');
-      warn.setAttribute('aria-label', `Error: ${warn.title}`);
+      warn.title = c.error + (c.autoHidden ? t(' (se desactivó sola)') : '');
+      warn.setAttribute('aria-label', t('Error: {v}', { v: warn.title }));
       label.append(warn);
     }
     const live = document.createElement('label');
     live.className = 'live-toggle';
-    live.title = 'Clicable fuera del modo edición';
+    live.title = t('Clicable fuera del modo edición');
     const click = document.createElement('input');
     click.type = 'checkbox';
     click.checked = !!c.clickable;
-    click.setAttribute('aria-label', `Clicable fuera del modo edición: ${c.title}`);
+    click.setAttribute('aria-label', `${live.title}: ${c.title}`);
     click.onchange = () => { c.clickable = click.checked; window.api.save(cards); render(); };
     live.append(click, '🖱');
     li.append(label, live);
@@ -494,7 +494,7 @@ document.getElementById('add').onclick = () => open(null);
 document.getElementById('refresh').onclick = () => window.api.refresh();
 document.getElementById('folder').onclick = () => window.api.openFolder();
 document.getElementById('restack').onclick = () => {
-  if (!confirm('¿Volver a poner todas las tarjetas en la columna de la derecha? (tamaños y zoom se conservan)')) return;
+  if (!confirm(t('¿Volver a poner todas las tarjetas en la columna de la derecha? (tamaños y zoom se conservan)'))) return;
   for (const c of cards) { delete c.x; delete c.y; }
   window.api.save(cards);
   render();
@@ -530,6 +530,22 @@ window.api.onEditMode((on) => {
   document.getElementById('panel').hidden = !on;
 });
 
+// static texts of index.html: remember the Spanish original once, then show t(original)
+const staticTexts = [];
+{
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) if (n.textContent.trim()) staticTexts.push([n, n.textContent]);
+}
+const staticPlaceholders = [...document.querySelectorAll('[placeholder]')].map((e) => [e, e.placeholder]);
+function applyLang(lang) {
+  setLang(lang);
+  document.documentElement.lang = LANG;
+  for (const [n, orig] of staticTexts) n.textContent = orig.replace(orig.trim(), t(orig.trim()));
+  for (const [e, orig] of staticPlaceholders) e.placeholder = t(orig);
+  setProfileLabel();
+}
+
+window.api.getSettings().then((s) => { applyLang(s.lang); render(); });
 window.api.load().then((c) => { cards = c; render(); });
 
 // configurations: picked at launch, from the toolbar or from the tray
@@ -537,8 +553,10 @@ const picker = document.getElementById('profiles');
 let profileInfo = { active: '', profiles: [] };
 const errorText = (e) => e.message.replace(/^.*Error: /, '');
 
-function setProfileLabel(name) {
-  document.getElementById('mode-label').textContent = `Modo edición · ${name || 'Predeterminada'}`;
+let profileName = '';
+function setProfileLabel(name = profileName) {
+  profileName = name;
+  document.getElementById('mode-label').textContent = `${t('Modo edición')} · ${name || t('Predeterminada')}`;
 }
 
 async function useProfile(run, name) {
@@ -561,15 +579,15 @@ function showProfiles(info) {
   news.hidden = !info.news;
   const row = (name, mtime) => {
     const li = document.createElement('li');
-    const pick = make('button', name || 'Predeterminada', name === info.active ? 'profile current' : 'profile');
-    if (mtime) pick.append(make('small', ` · ${new Date(mtime).toLocaleDateString('es')}`));
+    const pick = make('button', name || t('Predeterminada'), name === info.active ? 'profile current' : 'profile');
+    if (mtime) pick.append(make('small', ` · ${new Date(mtime).toLocaleDateString(LANG)}`));
     pick.onclick = () => useProfile(() => window.api.useProfile(name), name);
     li.append(pick);
     if (name && name !== info.active) {
       const del = make('button', '🗑', 'tool del-profile');
-      del.setAttribute('aria-label', `Borrar configuración ${name}`);
+      del.setAttribute('aria-label', t('Borrar configuración {name}', { name }));
       del.onclick = async () => {
-        if (!confirm(`¿Borrar la configuración "${name}"? No se puede deshacer.`)) return;
+        if (!confirm(t('¿Borrar la configuración "{name}"? No se puede deshacer.', { name }))) return;
         try { showProfiles(await window.api.deleteProfile(name)); } catch (e) { alert(errorText(e)); }
       };
       li.append(del);
@@ -578,7 +596,7 @@ function showProfiles(info) {
   };
   document.getElementById('profile-list').replaceChildren(row(''), ...info.profiles.map((p) => row(p.name, p.mtime)));
   const base = document.getElementById('profile-base');
-  base.replaceChildren(new Option('Predeterminada', ''), ...info.profiles.map((p) => new Option(p.name, p.name)));
+  base.replaceChildren(new Option(t('Predeterminada'), ''), ...info.profiles.map((p) => new Option(p.name, p.name)));
   base.value = info.active;
   if (!picker.open) picker.showModal();
 }
@@ -610,17 +628,18 @@ function showSettings(s) {
   disp.replaceChildren(...s.displays.map((d) => new Option(d.label, d.id)));
   disp.value = s.display;
   const rem = document.getElementById('set-remember');
-  rem.replaceChildren(new Option('Preguntar siempre', '__ask'), new Option('Predeterminada', ''),
+  rem.replaceChildren(new Option(t('Preguntar siempre'), '__ask'), new Option(t('Predeterminada'), ''),
     ...s.profiles.map((p) => new Option(p, p)));
   rem.value = s.remember == null ? '__ask' : s.remember;
+  document.getElementById('set-lang').value = s.lang;
   document.getElementById('set-keys').replaceChildren(...Object.entries(ACTION_LABELS).map(([k, label]) => {
-    const l = make('label', label + ' ');
+    const l = make('label', t(label) + ' ');
     const i = make('input');
     i.readOnly = true;
     i.value = keyLabel(s.keys[k]);
     i.dataset.key = k;
-    i.setAttribute('aria-label', `Atajo para ${label}: haz clic y pulsa la combinación`);
-    i.onfocus = () => { window.api.pauseKeys(true); i.value = 'Pulsa la combinación…'; };
+    i.setAttribute('aria-label', t('Atajo para {label}: haz clic y pulsa la combinación', { label: t(label) }));
+    i.onfocus = () => { window.api.pauseKeys(true); i.value = t('Pulsa la combinación…'); };
     i.onblur = () => { window.api.pauseKeys(false); i.value = keyLabel(s.keys[k]); };
     i.onkeydown = async (e) => {
       e.preventDefault();
@@ -636,8 +655,8 @@ function showSettings(s) {
     };
     const reset = make('button', '↺', 'tool');
     reset.type = 'button';
-    reset.title = 'Volver al atajo original';
-    reset.setAttribute('aria-label', `Atajo original para ${label}`);
+    reset.title = t('Volver al atajo original');
+    reset.setAttribute('aria-label', t('Atajo original para {label}', { label: t(label) }));
     reset.onclick = async () => showSettings(await window.api.setSettings({ keys: { [k]: null } }));
     l.append(i, reset);
     return l;
@@ -649,6 +668,12 @@ document.getElementById('set-autostart').onchange = async (e) => showSettings(aw
 document.getElementById('set-display').onchange = async (e) => showSettings(await window.api.setSettings({ display: e.target.value }));
 document.getElementById('set-remember').onchange = async (e) =>
   showSettings(await window.api.setSettings({ remember: e.target.value === '__ask' ? null : e.target.value }));
+document.getElementById('set-lang').onchange = async (e) => {
+  const r = await window.api.setSettings({ lang: e.target.value });
+  applyLang(r.lang);
+  render();
+  showSettings(r);
+};
 settingsDlg.addEventListener('close', () => {
   // back to click-through unless we're in edit mode
   grabbing = false;
