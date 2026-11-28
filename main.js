@@ -2,7 +2,8 @@ const { app, BrowserWindow, globalShortcut, ipcMain, screen, shell, Tray, Menu }
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
-const { scrape, fetchSkills, fetchSkillIcon, fetchLatestCM } = require('./scrape');
+const { scrape, fetchSkills, fetchSkillIcon, fetchLatestCM, isNewer, fetchLatestRelease } = require('./scrape');
+const { t, setLang } = require('./i18n');
 
 // "Predeterminada" is cards.json; each named configuration (one per CM, say) is profiles/<name>.json
 const DEFAULT_STORE = path.join(app.getPath('userData'), 'cards.json');
@@ -18,12 +19,20 @@ const ICON = path.join(__dirname, 'icon.png');
 // Global settings (not per configuration): shortcuts, screen, configuration to open at launch
 const SETTINGS = path.join(app.getPath('userData'), 'settings.json');
 const DEFAULT_KEYS = { edit: 'CommandOrControl+Shift+E', toggle: 'CommandOrControl+Shift+O', refresh: 'CommandOrControl+Shift+R' };
-let settings = { remember: null, display: null, keys: { ...DEFAULT_KEYS } };
+let settings = { remember: null, display: null, lang: null, keys: { ...DEFAULT_KEYS } };
 function loadSettings() {
   try {
     const s = JSON.parse(fs.readFileSync(SETTINGS, 'utf8'));
     settings = { ...settings, ...s, keys: { ...DEFAULT_KEYS, ...s.keys } };
   } catch {} // missing or broken: defaults
+  if (['es', 'en'].includes(settings.lang)) return;
+  // first run: Windows language. Older installs only ever had the Spanish UI, so they keep it.
+  const first = !fs.existsSync(DEFAULT_STORE) && !fs.existsSync(PROFILES);
+  settings.lang = first && !app.getLocale().toLowerCase().startsWith('es') ? 'en' : 'es';
+  if (first) {
+    fs.mkdirSync(app.getPath('userData'), { recursive: true });
+    saveSettings();
+  }
 }
 function saveSettings() {
   fs.writeFileSync(SETTINGS + '.tmp', JSON.stringify(settings, null, 2));
@@ -82,10 +91,10 @@ function listProfiles() {
 
 function useProfile(name) {
   name = cleanName(name);
-  if (name && !fs.existsSync(fileFor(name))) throw new Error(`No existe la configuración "${name}"`);
+  if (name && !fs.existsSync(fileFor(name))) throw new Error(t('No existe la configuración "{name}"', { name }));
   profile = name;
   STORE = fileFor(name);
-  tray?.setToolTip(`UmaScreen · ${name || 'Predeterminada'}`);
+  tray?.setToolTip(`UmaScreen · ${name || t('Predeterminada')}`);
   setEditMode(false);
   refreshAll(); // this configuration's own webs
   const cards = load();
@@ -95,8 +104,8 @@ function useProfile(name) {
 
 function createProfile(name, base) {
   name = cleanName(name);
-  if (!name) throw new Error('Escribe un nombre (letras, números, espacios, . _ -)');
-  if (fs.existsSync(fileFor(name))) throw new Error(`Ya existe "${name}"`);
+  if (!name) throw new Error(t('Escribe un nombre (letras, números, espacios, . _ -)'));
+  if (fs.existsSync(fileFor(name))) throw new Error(t('Ya existe "{name}"', { name }));
   const from = fileFor(cleanName(base));
   const cards = fs.existsSync(from) ? JSON.parse(fs.readFileSync(from, 'utf8'))
     : JSON.parse(fs.readFileSync(path.join(__dirname, 'defaults.json'), 'utf8'));
@@ -107,7 +116,7 @@ function createProfile(name, base) {
 
 function deleteProfile(name) {
   name = cleanName(name);
-  if (!name || name === profile) throw new Error('No se puede borrar la configuración en uso ni la predeterminada');
+  if (!name || name === profile) throw new Error(t('No se puede borrar la configuración en uso ni la predeterminada'));
   fs.rmSync(fileFor(name));
   return listProfiles();
 }
@@ -138,7 +147,7 @@ async function detectNewCM() {
   const name = cleanName(`CM${cm.n} ${cm.name}`);
   fs.mkdirSync(PROFILES, { recursive: true });
   fs.writeFileSync(fileFor(name), JSON.stringify(cards, null, 2), { flag: 'wx' });
-  return `Nueva CM detectada en Game8: se creó "${name}"${base ? ` a partir de "${base}"` : ''}.`;
+  return t('Nueva CM detectada en Game8: se creó "{name}"', { name }) + (base ? t(' a partir de "{base}"', { base }) : '') + '.';
 }
 
 async function checkCMAndChoose() {
@@ -256,10 +265,11 @@ function getSettings() {
   const primary = screen.getPrimaryDisplay().id;
   return {
     remember: settings.remember,
+    lang: settings.lang,
     keys: settings.keys,
     display: targetDisplay().id,
     displays: screen.getAllDisplays().map((d, i) => ({
-      id: d.id, label: `Pantalla ${i + 1} (${d.size.width}×${d.size.height})${d.id === primary ? ' · principal' : ''}`,
+      id: d.id, label: t('Pantalla {n}', { n: i + 1 }) + ` (${d.size.width}×${d.size.height})` + (d.id === primary ? t(' · principal') : ''),
     })),
     canAutostart: app.isPackaged,
     autostart: app.isPackaged && app.getLoginItemSettings({ path: exePath() }).openAtLogin,
@@ -277,20 +287,25 @@ function setSettings(patch = {}) {
   }
   if ('display' in patch) {
     const d = screen.getAllDisplays().find((x) => x.id === Number(patch.display));
-    if (d) { settings.display = d.id; win.setBounds(d.workArea); } else error = 'Esa pantalla ya no está conectada';
+    if (d) { settings.display = d.id; win.setBounds(d.workArea); } else error = t('Esa pantalla ya no está conectada');
+  }
+  if ('lang' in patch && ['es', 'en'].includes(patch.lang)) {
+    settings.lang = patch.lang;
+    setLang(settings.lang);
+    tray?.setToolTip(`UmaScreen · ${profile || t('Predeterminada')}`);
   }
   if (patch.keys) {
     for (const [k, acc] of Object.entries(patch.keys)) {
       if (!(k in ACTIONS)) continue;
       const value = acc == null ? DEFAULT_KEYS[k] : String(acc);
-      if (!KEY_RE.test(value)) { error = `Combinación no válida: ${value}`; continue; }
-      if (Object.entries(settings.keys).some(([o, a]) => o !== k && a === value)) { error = `${keyLabel(value)} ya está asignada a otra acción`; continue; }
+      if (!KEY_RE.test(value)) { error = t('Combinación no válida: {v}', { v: value }); continue; }
+      if (Object.entries(settings.keys).some(([o, a]) => o !== k && a === value)) { error = t('{k} ya está asignada a otra acción', { k: keyLabel(value) }); continue; }
       const before = settings.keys[k];
       settings.keys[k] = value;
       if (registerKeys().includes(k)) {
         settings.keys[k] = before;
         registerKeys();
-        error = `${keyLabel(value)} la está usando otro programa`;
+        error = t('{k} la está usando otro programa', { k: keyLabel(value) });
       }
     }
   }
@@ -321,17 +336,28 @@ function toggleVisible() {
   updateTrayMenu();
 }
 
+// newer Release on GitHub: Windows notification + first tray entry, both open its download page
+let update = null;
+async function checkUpdate() {
+  const r = await fetchLatestRelease();
+  if (!r || !isNewer(r.version, app.getVersion())) return;
+  update = r;
+  updateTrayMenu();
+  tray.displayBalloon({ iconType: 'info', title: t('Hay una versión nueva de UmaScreen ({v})', { v: r.version }), content: t('Haz clic para descargarla.') });
+}
+
 function updateTrayMenu() {
   tray?.setContextMenu(Menu.buildFromTemplate([
-    { label: `${win.isVisible() ? 'Ocultar' : 'Mostrar'} (${keyLabel(settings.keys.toggle)})`, click: toggleVisible },
-    { label: `Modo edición (${keyLabel(settings.keys.edit)})`, type: 'checkbox', checked: editMode, click: () => setEditMode(!editMode) },
-    { label: `Actualizar webs (${keyLabel(settings.keys.refresh)})`, click: refreshAll },
-    { label: `Cambiar configuración (${profile || 'Predeterminada'})…`, click: () => chooseProfile() },
-    { label: 'Buscar CM nueva en Game8', click: checkCMAndChoose },
-    { label: 'Ajustes…', click: openSettings },
-    { label: 'Abrir carpeta de datos', click: () => shell.openPath(app.getPath('userData')) },
+    ...(update ? [{ label: t('Descargar versión {v}…', { v: update.version }), click: () => shell.openExternal(update.url) }, { type: 'separator' }] : []),
+    { label: `${win.isVisible() ? t('Ocultar') : t('Mostrar')} (${keyLabel(settings.keys.toggle)})`, click: toggleVisible },
+    { label: `${t('Modo edición')} (${keyLabel(settings.keys.edit)})`, type: 'checkbox', checked: editMode, click: () => setEditMode(!editMode) },
+    { label: `${t('Actualizar webs')} (${keyLabel(settings.keys.refresh)})`, click: refreshAll },
+    { label: t('Cambiar configuración ({name})…', { name: profile || t('Predeterminada') }), click: () => chooseProfile() },
+    { label: t('Buscar CM nueva en Game8'), click: checkCMAndChoose },
+    { label: t('Ajustes…'), click: openSettings },
+    { label: t('Abrir carpeta de datos'), click: () => shell.openPath(app.getPath('userData')) },
     { type: 'separator' },
-    { label: 'Salir', click: () => app.quit() },
+    { label: t('Salir'), click: () => app.quit() },
   ]));
 }
 
@@ -351,6 +377,7 @@ app.whenReady().then(() => {
   if (!app.hasSingleInstanceLock()) return;
   try { removeOldCaches(); } catch {} // housekeeping only
   loadSettings();
+  setLang(settings.lang);
   // whole screen so cards can be dragged anywhere; it's transparent and click-through in view mode
   const { x, y, width, height } = targetDisplay().workArea;
   win = new BrowserWindow({
@@ -370,7 +397,9 @@ app.whenReady().then(() => {
   tray = new Tray(ICON);
   tray.setToolTip('UmaScreen');
   tray.on('click', toggleVisible);
+  tray.on('balloon-click', () => { if (update) shell.openExternal(update.url); });
   updateTrayMenu();
+  checkUpdate().catch(() => {}); // offline or GitHub down: no notice
 
   registerKeys();
 

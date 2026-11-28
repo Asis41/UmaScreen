@@ -1,11 +1,11 @@
 {
   "name": "umascreen",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node test/scrape.test.js",
+    "test": "node test/scrape.test.js && node test/i18n.test.js",
     "dist": "electron-builder --win portable"
   },
   "build": {

@@ -42,6 +42,7 @@
   <dialog id="settings">
     <form method="dialog">
       <h2>Ajustes</h2>
+      <label>Idioma / Language <select id="set-lang"><option value="es">Español</option><option value="en">English</option></select></label>
       <label class="check"><input type="checkbox" id="set-autostart"> Arrancar con Windows</label>
       <small id="set-autostart-note" class="hint">Solo disponible en el .exe (no al ejecutar con npm start).</small>
       <label>Pantalla del overlay <select id="set-display"></select></label>
@@ -75,6 +76,7 @@
     </form>
   </dialog>
 
+  <script src="i18n.js"></script>
   <script src="notes.js"></script>
   <script src="renderer.js"></script>
 </body>

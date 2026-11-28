@@ -80,6 +80,27 @@ async function fetchLatestCM() {
   return latestCM(await res.text(), CM_HUB);
 }
 
+// "v1.2.10" vs "1.2.9", number by number; anything that isn't a version is never newer
+function isNewer(tag, current) {
+  const v = (s) => (/^v?\d+(\.\d+)*$/.test(String(s)) ? String(s).replace(/^v/, '').split('.').map(Number) : null);
+  const a = v(tag), b = v(current);
+  if (!a || !b) return false;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+  }
+  return false;
+}
+
+const RELEASES = 'https://github.com/Asis41/UmaScreen/releases/';
+async function fetchLatestRelease() {
+  const res = await fetch('https://api.github.com/repos/Asis41/UmaScreen/releases/latest',
+    { headers: { 'User-Agent': 'UmaScreen' }, signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status} en GitHub`);
+  const r = await res.json();
+  // the URL ends up in shell.openExternal: only this repo's release pages
+  return typeof r.html_url === 'string' && r.html_url.startsWith(RELEASES) ? { version: String(r.tag_name), url: r.html_url } : null;
+}
+
 // GameTora builds its skill list with JS; the data is a JSON whose hashed name is in a manifest.
 // GameTora's own tags (style run/ldr/btw/cha, distance sho/mil/med/lng, dbf…) plus effect and rarity ones
 const EFFECT_TAGS = { 27: 'spd', 31: 'acc', 9: 'rec', 1: 'grn', 2: 'grn', 3: 'grn', 4: 'grn', 5: 'grn' };
@@ -156,4 +177,4 @@ async function fetchSkillIcon(id) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-module.exports = { extract, extractSection, scrape, skillList, conditionInfo, fetchSkills, fetchSkillIcon, latestCM, fetchLatestCM };
+module.exports = { extract, extractSection, scrape, skillList, conditionInfo, fetchSkills, fetchSkillIcon, latestCM, fetchLatestCM, isNewer, fetchLatestRelease };
